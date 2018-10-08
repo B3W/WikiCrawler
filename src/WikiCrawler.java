@@ -1,37 +1,7 @@
 import java.util.ArrayList;
 
 public class WikiCrawler {
-	
-	private class FIFOQueue<T> {
 		
-		private ArrayList<T> queue;
-		
-		public FIFOQueue() {
-			queue = new ArrayList<T>();
-		}
-		
-		/**
-		 * Add a new item into the queue
-		 * 
-		 * @param item  Item to be added into the queue
-		 */
-		public void add(T item) {
-			queue.add(item);
-		}
-		
-		/**
-		 * Get the first item from the queue and remove it
-		 * 
-		 * @return  First item in the queue
-		 */
-		public T extractTop() {
-			if (queue.size() == 0) {
-				return null;
-			}
-			return queue.remove(0);
-		}
-	}
-	
 	public static final String BASE_URL = "https://en.wikipedia.org";
 	
 	private String seed;
@@ -116,6 +86,11 @@ public class WikiCrawler {
 	 * @param focused If false explore via BFS, else 
 	 */
 	public void crawl(boolean focused) {
+		if (!focused) {
+			
+		} else {
+			
+		}
 		// TODO
 	}
 
