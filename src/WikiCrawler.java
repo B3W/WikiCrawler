@@ -1,7 +1,26 @@
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URL;
 import java.util.ArrayList;
 
 public class WikiCrawler {
 		
+	private class WebNode {
+		
+		private String page;
+		private ArrayList<WebNode> outEdge;
+		
+		public WebNode(String page) {
+			this.page = page;
+			outEdge = new ArrayList<WebNode>();
+		}
+		
+		public void addEdge(WebNode edge) {
+			outEdge.add(edge);
+		}
+	}
+	
 	public static final String BASE_URL = "https://en.wikipedia.org";
 	
 	private String seed;
@@ -84,14 +103,57 @@ public class WikiCrawler {
 	 * max number of pages has been crawled
 	 * 
 	 * @param focused If false explore via BFS, else 
+	 * @throws IOException  Malformed URL or Input Stream error
 	 */
-	public void crawl(boolean focused) {
+	public void crawl(boolean focused) throws IOException {		
+		int pageCnt = 0;
 		if (!focused) {
+			ArrayList<String> fifoQueue = new ArrayList<String>();	// FIFO queue
+			ArrayList<String> discovered = new ArrayList<String>();	// Keeps track of nodes which have been discovered
+			
+			fifoQueue.add(this.seed);	// Add root to queue
+			discovered.add(this.seed);	// Add root to discovered
+			String page;
+			
+			while (!fifoQueue.isEmpty()) {
+				page = fifoQueue.remove(0);	// Extract top of the queue
+				
+				URL wikiURL = new URL(BASE_URL + page);
+				BufferedReader br = new BufferedReader(new InputStreamReader(wikiURL.openStream()));
+				StringBuilder htmlDoc = new StringBuilder();
+				String temp;
+				while ((temp = br.readLine()) != null) {
+					htmlDoc.append(temp);
+				}
+				br.close();
+				
+				try {	// Adhere to politeness policy
+					Thread.sleep((3 * 1000) / 20);
+				} catch (InterruptedException e) {}
+				
+				for (String link : extractLinks(htmlDoc.toString())) {	// Extract outgoing edges
+					if (!discovered.contains(link)) {
+						if (topics.length == 0) {	// If no topics then all pages get explored
+							fifoQueue.add(link);
+							discovered.add(link);
+						} else {	// Only relevant pages get added to the queue and explored
+							
+						}
+					}
+				}
+			}
 			
 		} else {
 			
 		}
 		// TODO
+	}
+	
+	
+	private int computeRelevance(String document) {
+		
+		// TODO
+		return 0;
 	}
 
 }
