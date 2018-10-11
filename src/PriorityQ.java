@@ -248,19 +248,5 @@ public class PriorityQ {
 	public boolean isEmpty() {
 		return heapSize == 0;
 	} // isEmpty
-	
-	
-//	/**
-//	 * Prints out the heap to the terminal with HeapNode
-//	 * format of: <String_val, Key>
-//	 */
-//	public void printHeap() {
-//		if (heapSize == 0) {
-//			return;
-//		}
-//		for (int i = 1; i <= heapSize; i++) {
-//			System.out.printf("<%s, %d>, ", heapArr.get(i).getVal(), heapArr.get(i).getKey());
-//		}
-//		System.out.println();
-//	}
+
 }
