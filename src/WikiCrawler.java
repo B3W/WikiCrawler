@@ -35,8 +35,8 @@ public class WikiCrawler {
 		}
 	}
 	
-	//public static final String BASE_URL = "https://en.wikipedia.org";
-	public static final String BASE_URL = "http://web.cs.iastate.edu/~pavan";
+	public static final String BASE_URL = "https://en.wikipedia.org";
+	//public static final String BASE_URL = "http://web.cs.iastate.edu/~pavan";
 
 	
 	private String seed;
@@ -124,6 +124,7 @@ public class WikiCrawler {
 	 */
 	public void crawl(boolean focused) throws IOException {		
 		int pageCnt = 1;
+		HashMap<String, String> extractedLinks = new HashMap<String, String>();
 		int linkRelevance;
 		int tempRelevance = 0;
 		StringBuilder crawlOutput = new StringBuilder();
@@ -162,7 +163,15 @@ public class WikiCrawler {
 						Thread.sleep((3 * 1000) / 20);
 					} catch (InterruptedException e) {}
 				
+					extractedLinks.clear();
+					
 					for (String extractedLink : extractLinks(htmlDoc.toString())) {	// Extract outgoing edges
+						if (extractedLinks.containsKey(extractedLink)) { 	// Do not allow duplicate links on the same page
+							continue;
+						} else {
+							extractedLinks.put(extractedLink, null);
+						}
+						
 						WebNode node = discovered.get(extractedLink);
 						if (node == null) {
 							if (pageCnt < max) {
@@ -242,7 +251,15 @@ public class WikiCrawler {
 						Thread.sleep((3 * 1000) / 20);
 					} catch (InterruptedException e) {}
 					
+					extractedLinks.clear();
+					
 					for (String extractedLink : extractLinks(htmlDoc.toString())) {	// Extract outgoing edges
+						if (extractedLinks.containsKey(extractedLink)) { 	// Do not allow duplicate links on the same page
+							continue;
+						} else {
+							extractedLinks.put(extractedLink, null);
+						}
+						
 						WebNode node = discovered.get(extractedLink);
 						if (node == null) {
 							if (pageCnt < max) {
