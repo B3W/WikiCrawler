@@ -113,81 +113,154 @@ public class WikiCrawler {
 	
 	
 	/**
-	 * Crawls/explores the web pages start from seed URL until
-	 * max number of pages has been crawled
+	 * Crawls/explores the web pages starting from seed URL until
+	 * max number of pages has been crawled/discovered and prints
+	 * graph edges to file denoted in this.output.
 	 * 
-	 * @param focused If false explore via BFS, else 
+	 * @param focused  If false explore via BFS, else use priority queue and explore most relevant pages 
 	 * @throws IOException  Malformed URL or Input Stream error
 	 */
 	public void crawl(boolean focused) throws IOException {		
 		int pageCnt = 1;
-		
-		try (Writer fileWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(output), "utf-8"))) {
-			fileWriter.write(max + "\n");
+		int linkRelevance;
+		int tempRelevance = 0;
+		StringBuilder crawlOutput = new StringBuilder();
+		URL wikiURL;
+		BufferedReader br;
+		StringBuilder htmlDoc;
 			
-			if (!focused) {
-				ArrayList<LinkTuple> fifoQueue = new ArrayList<LinkTuple>();	// FIFO queue CHANGE THIS TO ACCEPT PAGE AND PAGE'S PARENT
-				HashMap<String, WebNode> discovered = new HashMap<String, WebNode>();	// Keeps track of nodes which have been discovered
+		if (!focused) {
+			ArrayList<LinkTuple> fifoQueue = new ArrayList<LinkTuple>();	// FIFO queue
+			HashMap<String, WebNode> discovered = new HashMap<String, WebNode>();	// Keeps track of nodes which have been discovered
+			
+			fifoQueue.add(new LinkTuple(this.seed, null));	// Add root to queue
+			discovered.put(this.seed, new WebNode());	// Add root to discovered
+			LinkTuple page;
+			
+			while (!fifoQueue.isEmpty()) {
+				page = fifoQueue.remove(0);	// Extract top of the queue
 				
-				fifoQueue.add(new LinkTuple(this.seed, null));	// Add root to queue
-				discovered.put(this.seed, new WebNode());	// Add root to discovered
-				LinkTuple page;
-				
-				while (!fifoQueue.isEmpty()) {
-					page = fifoQueue.remove(0);	// Extract top of the queue
-					
-					if (page.parent != null) {
-						fileWriter.write(String.format("%s %s\n", page.parent, page.link));
-					}
-					
-					WebNode curNode = discovered.get(page.link);
-
-					if (!curNode.explored) {
-						URL wikiURL = new URL(BASE_URL + page.link);
-						BufferedReader br = new BufferedReader(new InputStreamReader(wikiURL.openStream()));
-						StringBuilder htmlDoc = new StringBuilder();
-						String temp;
-						while ((temp = br.readLine()) != null) {
-							htmlDoc.append(temp);
-						}
-						br.close();
-						
-						try {	// Adhere to politeness policy
-							Thread.sleep((3 * 1000) / 20);
-						} catch (InterruptedException e) {}
-					
-						for (String extractedLink : extractLinks(htmlDoc.toString())) {	// Extract outgoing edges
-							WebNode node = discovered.get(extractedLink);
-							if (node == null) {
-								if (pageCnt < max) {
-									discovered.put(extractedLink, new WebNode());
-									pageCnt++;
-								} else {
-									continue;
-								}
-							}
-								
-							if (topics == null || topics.length == 0) {	// If no topics then all pages get explored
-								fifoQueue.add(new LinkTuple(extractedLink, page.link));
-							} else {	// Only relevant pages get added to the queue and explored
-								
-							}
-						}
-						curNode.explored = true;
-					}
+				if (page.parent != null) {
+					crawlOutput.append(String.format("%s %s\n", page.parent, page.link));
 				}
 				
-			} else {
-				// TODO
+				WebNode curNode = discovered.get(page.link);
+
+				if (!curNode.explored) {
+					wikiURL = new URL(BASE_URL + page.link);
+					br = new BufferedReader(new InputStreamReader(wikiURL.openStream()));
+					htmlDoc = new StringBuilder();
+					String temp;
+					while ((temp = br.readLine()) != null) {
+						htmlDoc.append(temp);
+					}
+					br.close();
+					
+					try {	// Adhere to politeness policy
+						Thread.sleep((3 * 1000) / 20);
+					} catch (InterruptedException e) {}
+				
+					for (String extractedLink : extractLinks(htmlDoc.toString())) {	// Extract outgoing edges
+						WebNode node = discovered.get(extractedLink);
+						if (node == null) {
+							if (pageCnt < max) {
+								node = new WebNode();
+								discovered.put(extractedLink, node);
+								pageCnt++;
+							} else {
+								continue;
+							}
+						}
+							
+						if (topics == null || topics.length == 0) {	// If no topics then all pages get explored
+							fifoQueue.add(new LinkTuple(extractedLink, page.link));
+						} else {	// Only relevant pages get added to the queue and explored
+							if (node.relevancy < 0) {  // Check if relevancy already computed
+								linkRelevance = 0;
+								
+								wikiURL = new URL(BASE_URL + extractedLink);
+								br = new BufferedReader(new InputStreamReader(wikiURL.openStream()));
+								htmlDoc = new StringBuilder();
+								String temp2;
+								while ((temp2 = br.readLine()) != null) {
+									htmlDoc.append(temp2);
+								}
+								br.close();
+								
+								try {	// Adhere to politeness policy
+									Thread.sleep((3 * 1000) / 20);
+								} catch (InterruptedException e) {}
+								
+								for (String topic : topics) {
+									tempRelevance = computeRelevance(htmlDoc.toString(), topic);
+									if (tempRelevance == 0) {  // If one of the topics not present then it isn't relevant
+										break;
+									}
+									linkRelevance += tempRelevance;
+								}
+								node.relevancy = tempRelevance > 0 ? linkRelevance : 0;
+							}
+							if (node.relevancy > 0) {  // Relevance > 0 get added to the queue
+								fifoQueue.add(new LinkTuple(extractedLink, page.link));
+							}
+						}
+					}
+					curNode.explored = true;
+				}
+			}
+			
+		} else {	// focused == true
+			// TODO
+		}
+		try (Writer fileWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(output), "utf-8"))) {	// Write results
+			fileWriter.write(pageCnt + "\n");
+			fileWriter.write(crawlOutput.toString());
+		}
+	} // crawl
+	
+	
+	public int computeRelevance(String document, String topic) {
+		boolean pTagFlag = false;
+		boolean htmlTagEnd = false;
+		int topicCnt = 0;
+		char curChar = 0;
+		String allowableChars = " /-\\;:\"@!()[]{}=+<>";
+		
+		for (int i = 0; i < document.length(); i++) {
+			curChar = document.charAt(i);
+			
+			if (!pTagFlag) {	// Search for the first paragraph tags before extracting links
+				if (curChar == '<') {
+					i++;
+					if (String.valueOf(document.charAt(i)).toLowerCase().equals("p")) {
+						i++;
+						if (document.charAt(i) == '>') {
+							pTagFlag = true;
+							htmlTagEnd = true;
+						}
+					}
+				}
+			} else {	// Paragraph tag encountered so begin link extraction
+				if (curChar == '>') { 	// Check for end of html tag indicating text is visible
+					htmlTagEnd = true;
+					continue;
+				} else if (curChar == '<') {
+					htmlTagEnd = false;
+				}
+				if (htmlTagEnd) {
+					if (document.startsWith(topic, i)) {
+						if (allowableChars.indexOf(document.charAt(i-1)) == -1) {  // Check if it is its own word
+							continue;
+						} else if (allowableChars.indexOf(document.charAt(i+topic.length())) == -1) {
+							continue;
+						}
+						topicCnt++;
+						i += (topic.length() - 1);
+					}
+				}
 			}
 		}
-	}
-	
-	
-	private int computeRelevance(String document) {
-		
-		// TODO
-		return 0;
-	}
+		return topicCnt;
+	} // computeRelevance
 
 }
