@@ -198,14 +198,14 @@ public class PriorityQ {
 	 * 
 	 * @return  ArrayList<Integer> containing priorities in their respective indeces in heap array
 	 */
-	public ArrayList<Integer> priorityArray() {
+	public int[] priorityArray() {
 		if (heapSize == 0) {
 			return null;
 		}
 		
-		ArrayList<Integer> priorityArr = new ArrayList<Integer>();
-		for (int i = 0; i <= heapSize; i++) {
-			priorityArr.add(heapArr.get(i).key);
+		int[] priorityArr = new int[heapSize];
+		for (int i = 0; i < heapSize; i++) {
+			priorityArr[i] = heapArr.get(i+1).key;
 		}
 		
 		return priorityArr;
