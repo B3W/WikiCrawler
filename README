@@ -14,6 +14,7 @@ being the use of a priority queue over a FIFO queue. Relevance of a page is dete
 page contains the given topics. 
 
 NOTE
+Arrays/ArrayLists are 1 indexed
 Will fix redundant code within the crawl method once I have more time. It works so leaving it for now.
 
 Author
