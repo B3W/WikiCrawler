@@ -1,0 +1,21 @@
+WikiCrawler
+
+
+Implementation
+WikiCrawler is an implementation of a web crawler which crawls '/wiki/' pages on Wikipedia's site. A web graph
+is constructed during the crawl where pages are represented as nodes and edges represent a link from one page
+to another (directed). Each directed edge in the graph is written to the provided text file.
+
+WikiCrawler has functionality to take topics as input and only crawl through pages which contain ALL of the topics.
+If no topics are provided then all pages are considered to have the same relevance, 0, and it does not affect the crawl
+path. An unfocused crawl will utilize BFS to construct the web graph. If a more focused search is desired, the
+WikiCrawler can explore only the most relevant pages. This exploration is a version of BFS with the difference
+being the use of a priority queue over a FIFO queue. Relevance of a page is determined by the number of times the 
+page contains the given topics. 
+
+
+Author
+Weston Berg
+
+Date
+10/11/2018

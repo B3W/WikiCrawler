@@ -9,8 +9,20 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+/**
+ * Web crawler for creating a web graph of '/wiki/' pages on
+ * Wikipedia's site. Pages are represented as nodes and edges
+ * are represented as links between pages (directed)
+ * 
+ * @author Weston Berg
+ */
 public class WikiCrawler {
 		
+	/**
+	 * Inner class for storing information on pages
+	 * 
+	 * @author Weston Berg
+	 */
 	private class WebNode {
 		
 		private boolean explored;
