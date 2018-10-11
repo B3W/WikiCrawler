@@ -1,27 +1,41 @@
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class WikiCrawler {
 		
 	private class WebNode {
 		
-		private String page;
-		private ArrayList<WebNode> outEdge;
+		private boolean explored;
+		private int relevancy;
 		
-		public WebNode(String page) {
-			this.page = page;
-			outEdge = new ArrayList<WebNode>();
-		}
-		
-		public void addEdge(WebNode edge) {
-			outEdge.add(edge);
+		public WebNode() {
+			explored = false;
+			relevancy = -1;
 		}
 	}
 	
-	public static final String BASE_URL = "https://en.wikipedia.org";
+	private class LinkTuple {
+		
+		private final String parent;
+		private final String link;
+		
+		public LinkTuple(String link, String parent) {
+			this.parent = parent;
+			this.link = link;
+		}
+	}
+	
+	//public static final String BASE_URL = "https://en.wikipedia.org";
+	public static final String BASE_URL = "http://web.cs.iastate.edu/~pavan";
+
 	
 	private String seed;
 	private int max;
@@ -106,47 +120,67 @@ public class WikiCrawler {
 	 * @throws IOException  Malformed URL or Input Stream error
 	 */
 	public void crawl(boolean focused) throws IOException {		
-		int pageCnt = 0;
-		if (!focused) {
-			ArrayList<String> fifoQueue = new ArrayList<String>();	// FIFO queue
-			ArrayList<String> discovered = new ArrayList<String>();	// Keeps track of nodes which have been discovered
+		int pageCnt = 1;
+		
+		try (Writer fileWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(output), "utf-8"))) {
+			fileWriter.write(max + "\n");
 			
-			fifoQueue.add(this.seed);	// Add root to queue
-			discovered.add(this.seed);	// Add root to discovered
-			String page;
-			
-			while (!fifoQueue.isEmpty()) {
-				page = fifoQueue.remove(0);	// Extract top of the queue
+			if (!focused) {
+				ArrayList<LinkTuple> fifoQueue = new ArrayList<LinkTuple>();	// FIFO queue CHANGE THIS TO ACCEPT PAGE AND PAGE'S PARENT
+				HashMap<String, WebNode> discovered = new HashMap<String, WebNode>();	// Keeps track of nodes which have been discovered
 				
-				URL wikiURL = new URL(BASE_URL + page);
-				BufferedReader br = new BufferedReader(new InputStreamReader(wikiURL.openStream()));
-				StringBuilder htmlDoc = new StringBuilder();
-				String temp;
-				while ((temp = br.readLine()) != null) {
-					htmlDoc.append(temp);
-				}
-				br.close();
+				fifoQueue.add(new LinkTuple(this.seed, null));	// Add root to queue
+				discovered.put(this.seed, new WebNode());	// Add root to discovered
+				LinkTuple page;
 				
-				try {	// Adhere to politeness policy
-					Thread.sleep((3 * 1000) / 20);
-				} catch (InterruptedException e) {}
-				
-				for (String link : extractLinks(htmlDoc.toString())) {	// Extract outgoing edges
-					if (!discovered.contains(link)) {
-						if (topics.length == 0) {	// If no topics then all pages get explored
-							fifoQueue.add(link);
-							discovered.add(link);
-						} else {	// Only relevant pages get added to the queue and explored
-							
+				while (!fifoQueue.isEmpty()) {
+					page = fifoQueue.remove(0);	// Extract top of the queue
+					
+					if (page.parent != null) {
+						fileWriter.write(String.format("%s %s\n", page.parent, page.link));
+					}
+					
+					WebNode curNode = discovered.get(page.link);
+
+					if (!curNode.explored) {
+						URL wikiURL = new URL(BASE_URL + page.link);
+						BufferedReader br = new BufferedReader(new InputStreamReader(wikiURL.openStream()));
+						StringBuilder htmlDoc = new StringBuilder();
+						String temp;
+						while ((temp = br.readLine()) != null) {
+							htmlDoc.append(temp);
 						}
+						br.close();
+						
+						try {	// Adhere to politeness policy
+							Thread.sleep((3 * 1000) / 20);
+						} catch (InterruptedException e) {}
+					
+						for (String extractedLink : extractLinks(htmlDoc.toString())) {	// Extract outgoing edges
+							WebNode node = discovered.get(extractedLink);
+							if (node == null) {
+								if (pageCnt < max) {
+									discovered.put(extractedLink, new WebNode());
+									pageCnt++;
+								} else {
+									continue;
+								}
+							}
+								
+							if (topics == null || topics.length == 0) {	// If no topics then all pages get explored
+								fifoQueue.add(new LinkTuple(extractedLink, page.link));
+							} else {	// Only relevant pages get added to the queue and explored
+								
+							}
+						}
+						curNode.explored = true;
 					}
 				}
+				
+			} else {
+				// TODO
 			}
-			
-		} else {
-			
 		}
-		// TODO
 	}
 	
 	
