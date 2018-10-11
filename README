@@ -13,6 +13,8 @@ WikiCrawler can explore only the most relevant pages. This exploration is a vers
 being the use of a priority queue over a FIFO queue. Relevance of a page is determined by the number of times the 
 page contains the given topics. 
 
+NOTE
+Will fix redundant code within the crawl method once I have more time. It works so leaving it for now.
 
 Author
 Weston Berg

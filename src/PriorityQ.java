@@ -196,16 +196,16 @@ public class PriorityQ {
 	/**
 	 * Returns array B with following property: B[i] = key(A[i])
 	 * 
-	 * @return  ArrayList<Integer> containing priorities in their respective indeces in heap array
+	 * @return  int[] containing priorities in their respective indeces in heap array
 	 */
 	public int[] priorityArray() {
 		if (heapSize == 0) {
 			return null;
 		}
 		
-		int[] priorityArr = new int[heapSize];
-		for (int i = 0; i < heapSize; i++) {
-			priorityArr[i] = heapArr.get(i+1).key;
+		int[] priorityArr = new int[heapSize+1];
+		for (int i = 1; i <= heapSize; i++) {
+			priorityArr[i] = heapArr.get(i).key;
 		}
 		
 		return priorityArr;
