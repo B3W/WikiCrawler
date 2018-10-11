@@ -15,10 +15,12 @@ public class WikiCrawler {
 		
 		private boolean explored;
 		private int relevancy;
+		private ArrayList<String> edges;
 		
 		public WebNode() {
 			explored = false;
 			relevancy = -1;
+			edges = new ArrayList<String>();
 		}
 	}
 	
@@ -174,6 +176,7 @@ public class WikiCrawler {
 							
 						if (topics == null || topics.length == 0) {	// If no topics then all pages get explored
 							fifoQueue.add(new LinkTuple(extractedLink, page.link));
+							
 						} else {	// Only relevant pages get added to the queue and explored
 							if (node.relevancy < 0) {  // Check if relevancy already computed
 								linkRelevance = 0;
@@ -210,7 +213,87 @@ public class WikiCrawler {
 			}
 			
 		} else {	// focused == true
-			// TODO
+			PriorityQ pQueue = new PriorityQ();	// Priority queue for storing nodes based on relevance
+			HashMap<String, WebNode> discovered = new HashMap<String, WebNode>();	// Keeps track of nodes which have been discovered
+			
+			pQueue.add(this.seed, 0);
+			discovered.put(this.seed, new WebNode());
+			String page;
+			
+			while(!pQueue.isEmpty()) {
+				page = pQueue.extractMax();	// Extract from top of heap
+				
+				WebNode curNode = discovered.get(page);
+				if (!curNode.edges.isEmpty()) {
+					crawlOutput.append(String.format("%s %s\n", curNode.edges.remove(0), page));
+				}
+				
+				if (!curNode.explored) {
+					wikiURL = new URL(BASE_URL + page);
+					br = new BufferedReader(new InputStreamReader(wikiURL.openStream()));
+					htmlDoc = new StringBuilder();
+					String temp;
+					while ((temp = br.readLine()) != null) {
+						htmlDoc.append(temp);
+					}
+					br.close();
+					
+					try {	// Adhere to politeness policy
+						Thread.sleep((3 * 1000) / 20);
+					} catch (InterruptedException e) {}
+					
+					for (String extractedLink : extractLinks(htmlDoc.toString())) {	// Extract outgoing edges
+						WebNode node = discovered.get(extractedLink);
+						if (node == null) {
+							if (pageCnt < max) {
+								node = new WebNode();
+								discovered.put(extractedLink, node);
+								pageCnt++;
+							} else {
+								continue;
+							}
+						}
+						
+						node.edges.add(page);
+						
+						if (topics == null || topics.length == 0) {	// If no topics then all pages get explored
+							node.relevancy = 0;
+							pQueue.add(extractedLink, 0);
+							
+						} else {	// Only relevant pages get added to the queue and explored
+							if (node.relevancy < 0) {  // Check if relevance already computed
+								linkRelevance = 0;
+								
+								wikiURL = new URL(BASE_URL + extractedLink);
+								br = new BufferedReader(new InputStreamReader(wikiURL.openStream()));
+								htmlDoc = new StringBuilder();
+								String temp2;
+								while ((temp2 = br.readLine()) != null) {
+									htmlDoc.append(temp2);
+								}
+								br.close();
+								
+								try {	// Adhere to politeness policy
+									Thread.sleep((3 * 1000) / 20);
+								} catch (InterruptedException e) {}
+								
+								for (String topic : topics) {
+									tempRelevance = computeRelevance(htmlDoc.toString(), topic);
+									if (tempRelevance == 0) {  // If one of the topics not present then it isn't relevant
+										break;
+									}
+									linkRelevance += tempRelevance;
+								}
+								node.relevancy = tempRelevance > 0 ? linkRelevance : 0;
+							}
+							if (node.relevancy > 0) {  // Relevance > 0 get added to the queue
+								pQueue.add(extractedLink, node.relevancy);
+							}
+						}
+					}
+					curNode.explored = true;
+				}
+			}
 		}
 		try (Writer fileWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(output), "utf-8"))) {	// Write results
 			fileWriter.write(pageCnt + "\n");
@@ -219,7 +302,14 @@ public class WikiCrawler {
 	} // crawl
 	
 	
-	public int computeRelevance(String document, String topic) {
+	/**
+	 * Computes the relevance of a page based on the given topic
+	 * 
+	 * @param document  HTML page to search for keyword in
+	 * @param topic  Keyword to match within the page
+	 * @return  Number of times keyword is encountered in the page, 0 otherwise
+	 */
+	private int computeRelevance(String document, String topic) {
 		boolean pTagFlag = false;
 		boolean htmlTagEnd = false;
 		int topicCnt = 0;

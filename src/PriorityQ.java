@@ -27,33 +27,7 @@ public class PriorityQ {
 			this.value = value;
 			this.key = key;
 		}
-		
-		/**
-		 * Getter method for node value 
-		 * 
-		 * @return  HeapNode's String value
-		 */
-		public String getVal() {
-			return value;
-		}
-		
-		/**
-		 * Getter method for node key
-		 * 
-		 * @return HeapNode's key (priority)
-		 */
-		public int getKey() {
-			return key;
-		}
-		
-		/**
-		 * Setter method for node key
-		 * 
-		 * @param key new value of key
-		 */
-		public void setKey(int key) {
-			this.key = key;
-		}
+
 	}
 	
 	// Heap represented as an array
@@ -93,7 +67,7 @@ public class PriorityQ {
 		int parent = 0;
 		while (curIndex > 1) {
 			parent = curIndex / 2;
-			if (heapArr.get(curIndex).getKey() > heapArr.get(parent).getKey()) {
+			if (heapArr.get(curIndex).key > heapArr.get(parent).key) {
 				Collections.swap(heapArr, curIndex, parent);
 				curIndex = parent;
 			} else {
@@ -112,7 +86,7 @@ public class PriorityQ {
 		if (heapSize == 0) {
 			return null;
 		}
-		return heapArr.get(1).getVal();
+		return heapArr.get(1).value;
 	} // returnMax
 	
 	
@@ -128,7 +102,7 @@ public class PriorityQ {
 		HeapNode retNode = heapArr.get(1);
 		remove(1);
 		
-		return retNode.getVal();
+		return retNode.value;
 	} // extractMin
 	
 	
@@ -155,10 +129,10 @@ public class PriorityQ {
 			if (leftChild > heapSize  && rightChild > heapSize) {	// Check if curIndex is leaf
 				return;
 			} else {
-				if ((leftChild <= heapSize) && (heapArr.get(leftChild).getKey() > heapArr.get(maxChild).getKey())) {	// Check if left child is largest
+				if ((leftChild <= heapSize) && (heapArr.get(leftChild).key > heapArr.get(maxChild).key)) {	// Check if left child is largest
 					maxChild = leftChild;
 				}
-				if ((rightChild <= heapSize) && (heapArr.get(rightChild).getKey() > heapArr.get(maxChild).getKey())) {	// Check if right child is largest
+				if ((rightChild <= heapSize) && (heapArr.get(rightChild).key > heapArr.get(maxChild).key)) {	// Check if right child is largest
 					maxChild = rightChild;
 				}
 				
@@ -207,11 +181,11 @@ public class PriorityQ {
 			return;
 		}
 		
-		int curKey = heapArr.get(i).getKey();
+		int curKey = heapArr.get(i).key;
 		if (k > curKey) {
-			heapArr.get(i).setKey(0);
+			heapArr.get(i).key = 0;
 		} else {
-			heapArr.get(i).setKey(curKey - k);
+			heapArr.get(i).key = curKey - k;
 		}
 		
 		percolateDown(i);	// Restore max heap property
@@ -231,7 +205,7 @@ public class PriorityQ {
 		
 		ArrayList<Integer> priorityArr = new ArrayList<Integer>();
 		for (int i = 0; i <= heapSize; i++) {
-			priorityArr.add(heapArr.get(i).getKey());
+			priorityArr.add(heapArr.get(i).key);
 		}
 		
 		return priorityArr;
@@ -248,7 +222,7 @@ public class PriorityQ {
 		if (heapSize == 0 || i < 1 || i > heapSize) {
 			return -1;
 		}
-		return heapArr.get(i).getKey();
+		return heapArr.get(i).key;
 	} // getKey
 	
 	
@@ -262,7 +236,7 @@ public class PriorityQ {
 		if (heapSize == 0 || i < 1 || i > heapSize) {
 			return null;
 		}
-		return heapArr.get(i).getVal();
+		return heapArr.get(i).value;
 	} // getValue
 	
 	
