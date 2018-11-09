@@ -66,7 +66,7 @@ public class PriorityQ {
 		int curIndex = heapSize;
 		int parent = 0;
 		while (curIndex > 1) {
-			parent = curIndex / 2;
+			parent = curIndex >> 1;  // Parent = i / 2
 			if (heapArr.get(curIndex).key > heapArr.get(parent).key) {
 				Collections.swap(heapArr, curIndex, parent);
 				curIndex = parent;
